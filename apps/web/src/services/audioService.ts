@@ -457,8 +457,62 @@ export class AudioService {
    * Speak announcement using Web Speech API with strict language matching.
    * NEVER silently uses Hindi voice for Bengali or Bengali for Hindi.
    */
+  private static PRE_RENDERED_AUDIO: Record<string, string> = {
+    // Bengali Incoming (Priya)
+    'প্রিয়ার কাছ থেকে ১ টাকা পেয়েছেন।': '/audio/bn_incoming_1_priya.mp3',
+    'প্রিয়ার কাছ থেকে ১০ টাকা পেয়েছেন।': '/audio/bn_incoming_10_priya.mp3',
+    'প্রিয়ার কাছ থেকে ১০০ টাকা পেয়েছেন।': '/audio/bn_incoming_100_priya.mp3',
+    'প্রিয়ার কাছ থেকে ১৫০ টাকা পেয়েছেন।': '/audio/bn_incoming_150_priya.mp3',
+    'প্রিয়ার কাছ থেকে ৫০০ টাকা পেয়েছেন।': '/audio/bn_incoming_500_priya.mp3',
+    'প্রিয়ার কাছ থেকে ১,০০০ টাকা পেয়েছেন।': '/audio/bn_incoming_1000_priya.mp3',
+    'প্রিয়ার কাছ থেকে ১,৫০০ টাকা পেয়েছেন।': '/audio/bn_incoming_1500_priya.mp3',
+    'প্রিয়ার কাছ থেকে ৫,০০০ টাকা পেয়েছেন।': '/audio/bn_incoming_5000_priya.mp3',
+    'প্রিয়ার কাছ থেকে ১০,০০০ টাকা পেয়েছেন।': '/audio/bn_incoming_10000_priya.mp3',
+    'প্রিয়ার কাছ থেকে ৫০,০০০ টাকা পেয়েছেন।': '/audio/bn_incoming_50000_priya.mp3',
+
+    // Bengali Outgoing (Priya)
+    'আপনি প্রিয়াকে ১ টাকা পাঠিয়েছেন।': '/audio/bn_outgoing_1_priya.mp3',
+    'আপনি প্রিয়াকে ১০ টাকা পাঠিয়েছেন।': '/audio/bn_outgoing_10_priya.mp3',
+    'আপনি প্রিয়াকে ১০০ টাকা পাঠিয়েছেন।': '/audio/bn_outgoing_100_priya.mp3',
+    'আপনি প্রিয়াকে ১৫০ টাকা পাঠিয়েছেন।': '/audio/bn_outgoing_150_priya.mp3',
+    'আপনি প্রিয়াকে ৫০০ টাকা পাঠিয়েছেন।': '/audio/bn_outgoing_500_priya.mp3',
+    'আপনি প্রিয়াকে ১,০০০ টাকা পাঠিয়েছেন।': '/audio/bn_outgoing_1000_priya.mp3',
+    'আপনি প্রিয়াকে ১,৫০০ টাকা পাঠিয়েছেন।': '/audio/bn_outgoing_1500_priya.mp3',
+    'আপনি প্রিয়াকে ৫,০০০ টাকা পাঠিয়েছেন।': '/audio/bn_outgoing_5000_priya.mp3',
+    'আপনি প্রিয়াকে ১০,০০০ টাকা পাঠিয়েছেন।': '/audio/bn_outgoing_10000_priya.mp3',
+    'আপনি প্রিয়াকে ৫০,০০০ টাকা পাঠিয়েছেন।': '/audio/bn_outgoing_50000_priya.mp3',
+
+    // Hindi Incoming (Priya)
+    'आपको प्रिया से 1 रुपये मिले।': '/audio/hi_incoming_1_priya.mp3',
+    'आपको प्रिया से 10 रुपये मिले।': '/audio/hi_incoming_10_priya.mp3',
+    'आपको प्रिया से 100 रुपये मिले।': '/audio/hi_incoming_100_priya.mp3',
+    'आपको प्रिया से 150 रुपये मिले।': '/audio/hi_incoming_150_priya.mp3',
+    'आपको प्रिया से 500 रुपये मिले।': '/audio/hi_incoming_500_priya.mp3',
+    'आपको प्रिया से 1,000 रुपये मिले।': '/audio/hi_incoming_1000_priya.mp3',
+    'आपको प्रिया से 1,500 रुपये मिले।': '/audio/hi_incoming_1500_priya.mp3',
+    'आपको प्रिया से 5,000 रुपये मिले।': '/audio/hi_incoming_5000_priya.mp3',
+    'आपको प्रिया से 10,000 रुपये मिले।': '/audio/hi_incoming_10000_priya.mp3',
+    'आपको प्रिया से 50,000 रुपये मिले।': '/audio/hi_incoming_50000_priya.mp3',
+
+    // Hindi Outgoing (Priya)
+    'आपने प्रिया को 1 रुपये भेजे।': '/audio/hi_outgoing_1_priya.mp3',
+    'आपने प्रिया को 10 रुपये भेजे।': '/audio/hi_outgoing_10_priya.mp3',
+    'आपने प्रिया को 100 रुपये भेजे।': '/audio/hi_outgoing_100_priya.mp3',
+    'आपने प्रिया को 150 रुपये भेजे।': '/audio/hi_outgoing_150_priya.mp3',
+    'आपने प्रिया को 500 रुपये भेजे।': '/audio/hi_outgoing_500_priya.mp3',
+    'आपने प्रिया को 1,000 रुपये भेजे।': '/audio/hi_outgoing_1000_priya.mp3',
+    'आपने प्रिया को 1,500 रुपये भेजे।': '/audio/hi_outgoing_1500_priya.mp3',
+    'आपने प्रिया को 5,000 रुपये भेजे।': '/audio/hi_outgoing_5000_priya.mp3',
+    'आपने प्रिया को 10,000 रुपये भेजे।': '/audio/hi_outgoing_10000_priya.mp3',
+    'आपने प्रिया को 50,000 रुपये भेजे।': '/audio/hi_outgoing_50000_priya.mp3',
+
+    // English
+    'You received 150 rupees from Priya.': '/audio/en_incoming_150_priya.mp3',
+    'You sent 150 rupees to Priya.': '/audio/en_outgoing_150_priya.mp3',
+  };
+
   /**
-   * Play high-fidelity natural speech audio from Cloud Voice Engine fallback.
+   * Play high-fidelity natural speech audio from Local Audio Cache or Cloud Voice Engine fallback.
    * Ensures natural Bengali/Hindi speech is delivered even when host device OS lacks local SAPI voice pack.
    */
   public async playCloudTtsAudio(
@@ -469,45 +523,77 @@ export class AudioService {
   ): Promise<boolean> {
     if (typeof window === 'undefined') return false;
 
-    return new Promise((resolve) => {
-      try {
-        const langCode = language === 'bn' ? 'bn' : language === 'hi' ? 'hi' : 'en-IN';
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${langCode}&client=tw-ob&q=${encodeURIComponent(text)}`;
-        const audio = new Audio();
-        audio.volume = Math.min(Math.max(volume, 0.1), 1.0);
-        audio.playbackRate = Math.min(Math.max(speedRate, 0.7), 1.3);
+    const trimmed = text.trim();
+    const candidateUrls: string[] = [];
 
-        let finished = false;
-        const cleanup = (success: boolean) => {
-          if (!finished) {
-            finished = true;
-            audio.onended = null;
-            audio.onerror = null;
-            resolve(success);
+    // 1. Check local pre-rendered audio asset for zero-latency instant offline speech
+    const localAsset = AudioService.PRE_RENDERED_AUDIO[trimmed];
+    if (localAsset) {
+      const meta = import.meta as unknown as { env?: { BASE_URL?: string } };
+      const base = meta.env?.BASE_URL || '/';
+      const resolved = base.endsWith('/')
+        ? `${base}${localAsset.replace(/^\//, '')}`
+        : `${base}/${localAsset.replace(/^\//, '')}`;
+      candidateUrls.push(resolved);
+    }
+
+    const langCode = language === 'bn' ? 'bn' : language === 'hi' ? 'hi' : 'en-IN';
+    const encoded = encodeURIComponent(trimmed);
+
+    // 2. High-reliability online endpoint (client=gtx) with no-referrer
+    candidateUrls.push(
+      `https://translate.google.com/translate_tts?ie=UTF-8&tl=${langCode}&client=gtx&q=${encoded}`
+    );
+
+    for (const url of candidateUrls) {
+      const ok = await new Promise<boolean>((resolve) => {
+        try {
+          const audio = new Audio();
+          (audio as unknown as { referrerPolicy: string }).referrerPolicy = 'no-referrer';
+          audio.volume = Math.min(Math.max(volume, 0.1), 1.0);
+          audio.playbackRate = Math.min(Math.max(speedRate, 0.7), 1.3);
+
+          let resolved = false;
+          const done = (val: boolean) => {
+            if (!resolved) {
+              resolved = true;
+              audio.onended = null;
+              audio.onerror = null;
+              resolve(val);
+            }
+          };
+
+          const timer = setTimeout(() => done(false), 7000);
+
+          audio.onended = () => {
+            clearTimeout(timer);
+            done(true);
+          };
+
+          audio.onerror = () => {
+            clearTimeout(timer);
+            done(false);
+          };
+
+          audio.src = url;
+          const p = audio.play();
+          if (p) {
+            p.catch(() => {
+              clearTimeout(timer);
+              done(false);
+            });
           }
-        };
+        } catch {
+          resolve(false);
+        }
+      });
 
-        const timer = setTimeout(() => cleanup(false), 8000);
-
-        audio.onended = () => {
-          clearTimeout(timer);
-          cleanup(true);
-        };
-
-        audio.onerror = () => {
-          clearTimeout(timer);
-          cleanup(false);
-        };
-
-        audio.src = url;
-        audio.play().catch(() => {
-          clearTimeout(timer);
-          cleanup(false);
-        });
-      } catch {
-        resolve(false);
+      if (ok) {
+        return true;
       }
-    });
+    }
+
+    return false;
   }
 
   public async speakText(
