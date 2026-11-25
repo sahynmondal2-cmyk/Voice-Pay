@@ -51,7 +51,7 @@ class SoundEngineService(context: Context) : TextToSpeech.OnInitListener {
      */
     fun formatBengaliGenitiveName(name: String): String {
         val trimmed = name.trim()
-        if (trimmed.isEmpty()) return "গ্রাহকের"
+        if (trimmed.isEmpty() || trimmed.lowercase() == "customer" || trimmed == "গ্রাহক") return "গ্রাহকের"
         val lower = trimmed.lowercase()
         if (lower == "priya" || lower.startsWith("priya banerjee")) return "প্রিয়ার"
         if (lower == "rahul" || lower.startsWith("rahul sharma")) return "রাহুলের"
@@ -69,7 +69,7 @@ class SoundEngineService(context: Context) : TextToSpeech.OnInitListener {
      */
     fun formatBengaliAccusativeName(name: String): String {
         val trimmed = name.trim()
-        if (trimmed.isEmpty()) return "প্রাপককে"
+        if (trimmed.isEmpty() || trimmed.lowercase() == "recipient" || trimmed == "প্রাপক") return "প্রাপককে"
         val lower = trimmed.lowercase()
         if (lower == "priya" || lower.startsWith("priya banerjee")) return "প্রিয়াকে"
         if (lower == "rahul" || lower.startsWith("rahul sharma")) return "রাহুলকে"
@@ -86,7 +86,8 @@ class SoundEngineService(context: Context) : TextToSpeech.OnInitListener {
      */
     fun formatHindiName(name: String): String {
         val trimmed = name.trim()
-        if (trimmed.isEmpty()) return "ग्राहक"
+        if (trimmed.isEmpty() || trimmed.lowercase() == "customer" || trimmed == "ग्राहक") return "ग्राहक"
+        if (trimmed.lowercase() == "recipient" || trimmed == "प्राप्तकर्ता") return "प्राप्तकर्ता"
         val lower = trimmed.lowercase()
         if (lower == "priya" || lower.startsWith("priya banerjee")) return "प्रिया"
         if (lower == "rahul" || lower.startsWith("rahul sharma")) return "राहुल"
@@ -138,6 +139,12 @@ class SoundEngineService(context: Context) : TextToSpeech.OnInitListener {
         txnId: String? = null,
         forceReplay: Boolean = false
     ): Boolean {
+        // Rule 0: Invalid or non-positive amounts are rejected
+        if (amount <= 0) {
+            Log.w("PayVoice", "Skipping announcement for invalid/zero amount: $amount")
+            return false
+        }
+
         // Rule 1: Never announce pending or failed transactions
         if (status != "Demo Successful") {
             Log.d("PayVoice", "Skipping announcement for non-successful status: $status")

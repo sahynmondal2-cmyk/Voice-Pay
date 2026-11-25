@@ -12,6 +12,7 @@ export class AudioService {
   private voices: SpeechSynthesisVoice[] = [];
   private voicesLoadedPromise: Promise<SpeechSynthesisVoice[]> | null = null;
   private announcedTxnIds = new Set<string>();
+  private currentAudioElement: HTMLAudioElement | null = null;
 
   constructor() {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -226,7 +227,7 @@ export class AudioService {
    */
   public formatBengaliGenitiveName(name: string): string {
     const trimmed = name.trim();
-    if (!trimmed) return 'গ্রাহকের';
+    if (!trimmed || trimmed.toLowerCase() === 'customer' || trimmed === 'গ্রাহক') return 'গ্রাহকের';
 
     // If English "Priya" or Bengali "প্রিয়া", inflect to "প্রিয়ার"
     if (trimmed.toLowerCase() === 'priya') return 'প্রিয়ার';
@@ -251,7 +252,7 @@ export class AudioService {
    */
   public formatBengaliAccusativeName(name: string): string {
     const trimmed = name.trim();
-    if (!trimmed) return 'প্রাপককে';
+    if (!trimmed || trimmed.toLowerCase() === 'recipient' || trimmed === 'প্রাপক') return 'প্রাপককে';
 
     if (trimmed.toLowerCase() === 'priya' || trimmed === 'প্রিয়া') return 'প্রিয়াকে';
     if (trimmed.toLowerCase() === 'rahul' || trimmed === 'রাহুল') return 'রাহুলকে';
@@ -269,7 +270,8 @@ export class AudioService {
    */
   public formatHindiName(name: string): string {
     const trimmed = name.trim();
-    if (!trimmed) return 'ग्राहक';
+    if (!trimmed || trimmed.toLowerCase() === 'customer' || trimmed === 'ग्राहक') return 'ग्राहक';
+    if (trimmed.toLowerCase() === 'recipient' || trimmed === 'प्राप्तकर्ता') return 'प्राप्तकर्ता';
     if (trimmed.toLowerCase() === 'priya') return 'प्रिया';
     if (trimmed.toLowerCase() === 'rahul' || trimmed.toLowerCase() === 'rahul sharma') return 'राहुल';
     if (trimmed.toLowerCase() === 'aniket' || trimmed.toLowerCase() === 'aniket sen') return 'अनिकेत';
@@ -512,6 +514,24 @@ export class AudioService {
   };
 
   /**
+   * Stop all ongoing speech and audio playback immediately
+   */
+  public stopAllAudio(): void {
+    if (typeof window !== 'undefined') {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      if (this.currentAudioElement) {
+        try {
+          this.currentAudioElement.pause();
+          this.currentAudioElement.currentTime = 0;
+        } catch {}
+        this.currentAudioElement = null;
+      }
+    }
+  }
+
+  /**
    * Play high-fidelity natural speech audio from Local Audio Cache or Cloud Voice Engine fallback.
    * Ensures natural Bengali/Hindi speech is delivered even when host device OS lacks local SAPI voice pack.
    */
@@ -522,6 +542,15 @@ export class AudioService {
     speedRate = 1.0
   ): Promise<boolean> {
     if (typeof window === 'undefined') return false;
+
+    // Interrupt any active audio element from rapid consecutive triggers
+    if (this.currentAudioElement) {
+      try {
+        this.currentAudioElement.pause();
+        this.currentAudioElement.currentTime = 0;
+      } catch {}
+      this.currentAudioElement = null;
+    }
 
     const trimmed = text.trim();
     const candidateUrls: string[] = [];
@@ -549,6 +578,7 @@ export class AudioService {
       const ok = await new Promise<boolean>((resolve) => {
         try {
           const audio = new Audio();
+          this.currentAudioElement = audio;
           (audio as unknown as { referrerPolicy: string }).referrerPolicy = 'no-referrer';
           audio.volume = Math.min(Math.max(volume, 0.1), 1.0);
           audio.playbackRate = Math.min(Math.max(speedRate, 0.7), 1.3);
@@ -557,6 +587,9 @@ export class AudioService {
           const done = (val: boolean) => {
             if (!resolved) {
               resolved = true;
+              if (this.currentAudioElement === audio) {
+                this.currentAudioElement = null;
+              }
               audio.onended = null;
               audio.onerror = null;
               resolve(val);
@@ -604,6 +637,9 @@ export class AudioService {
     onVoiceUnavailable?: (lang: SupportedLanguage) => void
   ): Promise<void> {
     if (typeof window === 'undefined') return;
+
+    // Cancel any active overlapping speech or audio element immediately
+    this.stopAllAudio();
 
     // Ensure voices are freshly initialized and up to date
     const voices = await this.ensureVoicesLoaded();
@@ -696,6 +732,12 @@ export class AudioService {
   ): Promise<boolean> {
     // Rule: Announcement must only happen for SUCCESS transactions
     if (txn.status !== 'Demo Successful') {
+      return false;
+    }
+
+    // Rule: Amount validation (missing, NaN, or non-positive amounts are rejected)
+    if (typeof txn.amount !== 'number' || isNaN(txn.amount) || txn.amount <= 0) {
+      console.warn('Payment alert skipped: Amount must be a positive number.', txn.amount);
       return false;
     }
 
