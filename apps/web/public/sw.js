@@ -1,8 +1,7 @@
 // PayVoice Service Worker - Safe Static Asset Caching & Offline Fallback
-const CACHE_NAME = 'payvoice-v1';
+const CACHE_NAME = 'payvoice-v2.2';
 const STATIC_ASSETS = [
   '/',
-  '/index.html',
   '/manifest.webmanifest',
   '/icon-192.svg',
   '/icon-512.svg',
@@ -34,13 +33,39 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests for safe static caching
   if (event.request.method !== 'GET') return;
 
+  // 1. Navigation / Document requests: Always fetch network first to ensure fresh build JS/CSS
+  if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('/offline.html').then((r) => r || new Response('Offline', { status: 503 }));
+      })
+    );
+    return;
+  }
+
+  // 2. Audio assets: Serve cache-first or network
+  if (event.request.url.includes('/audio/')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((resp) => {
+          if (resp && resp.status === 200) {
+            const clone = resp.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(event.request, clone));
+          }
+          return resp;
+        });
+      })
+    );
+    return;
+  }
+
+  // 3. Other static assets
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
-        // Cache static asset copies dynamically if needed
         if (
           networkResponse &&
           networkResponse.status === 200 &&
@@ -54,13 +79,9 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       })
       .catch(() => {
-        // Return cached version or offline page fallback
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) {
             return cachedResponse;
-          }
-          if (event.request.mode === 'navigate') {
-            return caches.match('/offline.html');
           }
           return new Response('Network offline', { status: 503, statusText: 'Offline' });
         });
