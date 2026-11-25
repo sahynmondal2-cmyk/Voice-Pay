@@ -5,7 +5,10 @@ data class DemoTransaction(
     val timestamp: String,
     val amount: Int,
     val status: String,
+    val direction: String = "incoming", // "incoming" | "outgoing"
     val customerName: String,
+    val senderName: String? = null,
+    val recipientName: String? = null,
     val customerVpa: String,
     val method: String,
     val notes: String = "",

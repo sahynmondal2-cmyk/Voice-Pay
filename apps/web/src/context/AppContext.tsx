@@ -9,6 +9,9 @@ import {
   GameProgress,
   SubscriptionPlan,
   SupportTicket,
+  TransactionDirection,
+  TransactionStatus,
+  VoiceAvailabilityStatus,
 } from '../types';
 import {
   INITIAL_MERCHANT,
@@ -37,17 +40,26 @@ interface AppContextType {
   transactions: DemoTransaction[];
   addTransaction: (data: {
     amount: number;
-    customerName: string;
+    customerName?: string;
+    senderName?: string;
+    recipientName?: string;
+    direction?: TransactionDirection;
     customerVpa?: string;
     notes?: string;
+    status?: TransactionStatus;
   }) => DemoTransaction;
   replayTransactionVoice: (id: string) => Promise<void>;
   voiceSettings: VoiceSettings;
   updateVoiceSettings: (settings: Partial<VoiceSettings>) => void;
+  voiceAvailability: VoiceAvailabilityStatus;
+  refreshVoiceAvailability: () => Promise<VoiceAvailabilityStatus>;
   isAudioUnlocked: boolean;
   unlockAudio: () => boolean;
   isSpeaking: boolean;
-  testVoiceAnnouncement: (customText?: string) => Promise<void>;
+  testVoiceAnnouncement: (customText?: string, direction?: TransactionDirection) => Promise<void>;
+  testBengaliVoice: (direction?: TransactionDirection, amount?: number, name?: string) => Promise<void>;
+  testHindiVoice: (direction?: TransactionDirection, amount?: number, name?: string) => Promise<void>;
+  testEnglishVoice: (direction?: TransactionDirection, amount?: number, name?: string) => Promise<void>;
   userPreferences: UserPreferences;
   updatePreferences: (prefs: Partial<UserPreferences>) => void;
   gameProgress: GameProgress;
@@ -200,6 +212,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // 7. Audio State
   const [isAudioUnlocked, setIsAudioUnlocked] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voiceAvailability, setVoiceAvailability] = useState<VoiceAvailabilityStatus>({
+    hasBengaliVoice: false,
+    hasHindiVoice: false,
+    hasEnglishVoice: false,
+  });
+
+  const refreshVoiceAvailability = useCallback(async () => {
+    const status = await audioService.getVoiceAvailabilityStatus();
+    setVoiceAvailability(status);
+    return status;
+  }, []);
+
+  useEffect(() => {
+    refreshVoiceAvailability();
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.addEventListener('voiceschanged', refreshVoiceAvailability);
+      return () => {
+        window.speechSynthesis.removeEventListener('voiceschanged', refreshVoiceAvailability);
+      };
+    }
+  }, [refreshVoiceAvailability]);
 
   const unlockAudio = useCallback(() => {
     const unlocked = audioService.unlockAudio();
@@ -207,12 +240,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return unlocked;
   }, []);
 
-  const testVoiceAnnouncement = async (customText?: string) => {
+  const testVoiceAnnouncement = async (customText?: string, direction?: TransactionDirection) => {
     setIsSpeaking(true);
     unlockAudio();
     try {
       if (customText) {
-        await audioService.playChime(voiceSettings.soundChime, voiceSettings.volume);
+        if (direction === 'outgoing') {
+          await audioService.playOutgoingChime(voiceSettings.volume);
+        } else {
+          await audioService.playChime(voiceSettings.soundChime, voiceSettings.volume);
+        }
         await audioService.speakText(
           customText,
           voiceSettings.language,
@@ -220,12 +257,127 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           voiceSettings.volume
         );
       } else {
-        await audioService.announcePayment(
-          150,
-          voiceSettings,
-          voiceSettings.announcePayerName ? 'Priya' : undefined
-        );
+        const testDir = direction || 'incoming';
+        const mockTxn: DemoTransaction = {
+          id: `TEST-ANNOUNCE-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          amount: 150,
+          status: 'Demo Successful',
+          direction: testDir,
+          customerName: 'Priya',
+          senderName: testDir === 'incoming' ? 'Priya' : undefined,
+          recipientName: testDir === 'outgoing' ? 'Priya' : undefined,
+          customerVpa: 'priya***@demo-upi',
+          method: 'UPI QR Demo',
+          notes: 'Voice test preview',
+          shopId: activeShop.id,
+          voiceAnnounced: true,
+          isDemo: true,
+        };
+        await audioService.announceTransaction(mockTxn, voiceSettings, { forceReplay: true });
       }
+    } finally {
+      setIsSpeaking(false);
+    }
+  };
+
+  const testBengaliVoice = async (
+    direction: TransactionDirection = 'incoming',
+    amount: number = 150,
+    name: string = 'Priya'
+  ) => {
+    setIsSpeaking(true);
+    unlockAudio();
+    try {
+      const mockTxn: DemoTransaction = {
+        id: `TEST-BN-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        amount,
+        status: 'Demo Successful',
+        direction,
+        customerName: name,
+        senderName: direction === 'incoming' ? name : undefined,
+        recipientName: direction === 'outgoing' ? name : undefined,
+        customerVpa: 'priya***@demo-upi',
+        method: 'UPI QR Demo',
+        notes: 'Bengali Voice Preview',
+        shopId: activeShop.id,
+        voiceAnnounced: true,
+        isDemo: true,
+      };
+      await audioService.announceTransaction(
+        mockTxn,
+        { ...voiceSettings, language: 'bn' },
+        { forceReplay: true }
+      );
+    } finally {
+      setIsSpeaking(false);
+    }
+  };
+
+  const testHindiVoice = async (
+    direction: TransactionDirection = 'incoming',
+    amount: number = 150,
+    name: string = 'Priya'
+  ) => {
+    setIsSpeaking(true);
+    unlockAudio();
+    try {
+      const mockTxn: DemoTransaction = {
+        id: `TEST-HI-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        amount,
+        status: 'Demo Successful',
+        direction,
+        customerName: name,
+        senderName: direction === 'incoming' ? name : undefined,
+        recipientName: direction === 'outgoing' ? name : undefined,
+        customerVpa: 'priya***@demo-upi',
+        method: 'UPI QR Demo',
+        notes: 'Hindi Voice Preview',
+        shopId: activeShop.id,
+        voiceAnnounced: true,
+        isDemo: true,
+      };
+      await audioService.announceTransaction(
+        mockTxn,
+        { ...voiceSettings, language: 'hi' },
+        { forceReplay: true }
+      );
+    } finally {
+      setIsSpeaking(false);
+    }
+  };
+
+  const testEnglishVoice = async (
+    direction: TransactionDirection = 'incoming',
+    amount: number = 150,
+    name: string = 'Priya'
+  ) => {
+    setIsSpeaking(true);
+    unlockAudio();
+    try {
+      const mockTxn: DemoTransaction = {
+        id: `TEST-EN-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        amount,
+        status: 'Demo Successful',
+        direction,
+        customerName: name,
+        senderName: direction === 'incoming' ? name : undefined,
+        recipientName: direction === 'outgoing' ? name : undefined,
+        customerVpa: 'priya***@demo-upi',
+        method: 'UPI QR Demo',
+        notes: 'English Voice Preview',
+        shopId: activeShop.id,
+        voiceAnnounced: true,
+        isDemo: true,
+      };
+      await audioService.announceTransaction(
+        mockTxn,
+        { ...voiceSettings, language: 'en' },
+        { forceReplay: true }
+      );
     } finally {
       setIsSpeaking(false);
     }
@@ -237,11 +389,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsSpeaking(true);
     unlockAudio();
     try {
-      await audioService.announcePayment(
-        txn.amount,
-        voiceSettings,
-        txn.customerName
-      );
+      await audioService.announceTransaction(txn, voiceSettings, { forceReplay: true });
     } finally {
       setIsSpeaking(false);
     }
@@ -250,22 +398,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // 8. Add Simulated Transaction
   const addTransaction = (data: {
     amount: number;
-    customerName: string;
+    customerName?: string;
+    senderName?: string;
+    recipientName?: string;
+    direction?: TransactionDirection;
     customerVpa?: string;
     notes?: string;
+    status?: TransactionStatus;
   }): DemoTransaction => {
     const randomSuffix = Math.floor(100000 + Math.random() * 900000);
+    const direction = data.direction || 'incoming';
+    const status = data.status || 'Demo Successful';
+    const resolvedName =
+      data.customerName ||
+      (direction === 'incoming'
+        ? (data.senderName || 'Priya')
+        : (data.recipientName || 'Priya'));
+
     const newTxn: DemoTransaction = {
       id: `DEMO-TXN-${randomSuffix}`,
       timestamp: new Date().toISOString(),
       amount: data.amount,
-      status: 'Demo Successful',
-      customerName: data.customerName || 'Demo Customer',
-      customerVpa: data.customerVpa || `${data.customerName.toLowerCase().replace(/\s+/g, '')}***@demo-upi`,
+      status,
+      direction,
+      customerName: resolvedName,
+      senderName: direction === 'incoming' ? (data.senderName || resolvedName) : undefined,
+      recipientName: direction === 'outgoing' ? (data.recipientName || resolvedName) : undefined,
+      customerVpa: data.customerVpa || `${resolvedName.toLowerCase().replace(/\s+/g, '')}***@demo-upi`,
       method: 'UPI QR Demo',
-      notes: data.notes || 'Instant Demo Counter Payment',
+      notes: data.notes || (direction === 'outgoing' ? 'Vendor Payout Demo' : 'Instant Demo Counter Payment'),
       shopId: activeShop.id,
-      voiceAnnounced: true,
+      voiceAnnounced: status === 'Demo Successful',
       isDemo: true,
     };
 
@@ -277,12 +440,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return updated;
     });
 
-    // Speak aloud immediately
-    audioService.announcePayment(
-      newTxn.amount,
-      voiceSettings,
-      newTxn.customerName
-    ).catch(() => {});
+    // Speak aloud if successful
+    if (status === 'Demo Successful') {
+      audioService.announceTransaction(newTxn, voiceSettings).catch(() => {});
+    }
 
     return newTxn;
   };
@@ -391,10 +552,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         replayTransactionVoice,
         voiceSettings,
         updateVoiceSettings,
+        voiceAvailability,
+        refreshVoiceAvailability,
         isAudioUnlocked,
         unlockAudio,
         isSpeaking,
         testVoiceAnnouncement,
+        testBengaliVoice,
+        testHindiVoice,
+        testEnglishVoice,
         userPreferences,
         updatePreferences,
         gameProgress,

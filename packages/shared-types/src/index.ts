@@ -1,5 +1,5 @@
 /**
- * PayVoice Shared Domain Models & Types
+ * PayVoice Shared Domain Models & Types - Phase 2
  * Strictly for demo and UI architecture purposes.
  * All financial references are artificial and marked Demo.
  */
@@ -18,13 +18,18 @@ export type PaymentMethod =
   | 'NetBanking Demo'
   | 'Wallet Demo';
 
+export type TransactionDirection = 'incoming' | 'outgoing';
+
 export interface DemoTransaction {
   id: string; // Artificial demo reference e.g. "DEMO-TXN-883921"
   timestamp: string; // ISO string
   amount: number; // In INR (₹)
   status: TransactionStatus;
-  customerName: string;
-  customerVpa: string; // Artificial masked VPA e.g. "rohit***@demo-upi"
+  direction: TransactionDirection; // 'incoming' = received, 'outgoing' = sent
+  customerName: string; // Sender if incoming, Recipient if outgoing
+  senderName?: string;
+  recipientName?: string;
+  customerVpa: string; // Masked VPA e.g. "priya***@demo-upi"
   method: PaymentMethod;
   notes?: string;
   shopId: string;
@@ -35,27 +40,27 @@ export interface DemoTransaction {
 export interface Shop {
   id: string;
   name: string;
-  category: string; // e.g., "Grocery & Daily Needs", "Tea Stall", "Stationery"
+  category: string;
   address: string;
   city: string;
-  state: string; // Default: West Bengal
+  state: string;
   pincode: string;
-  upiIdDemo: string; // "payvoice.demo@bank"
-  soundBoxId: string; // "PV-BOX-7729"
+  upiIdDemo: string;
+  soundBoxId: string;
   isPrimary: boolean;
 }
 
 export interface Merchant {
   id: string;
   fullName: string;
-  phoneDemo: string; // Masked demo "+91 98300 •••••"
-  emailDemo: string; // "merchant@example.com"
+  phoneDemo: string;
+  emailDemo: string;
   registeredAt: string;
   kycStatus: 'Verified (Demo)' | 'Pending (Demo)';
   bankAccountDemo: {
     bankName: string;
-    accountNumberMasked: string; // "•••• •••• 4519"
-    ifscDemo: string; // "DEMOB000123"
+    accountNumberMasked: string;
+    ifscDemo: string;
   };
   shops: Shop[];
   tier: 'Free' | 'Business Premium Demo';
@@ -63,13 +68,15 @@ export interface Merchant {
 
 export interface VoiceSettings {
   language: SupportedLanguage;
-  speechRate: number; // 0.8 to 1.3, default 1.0
-  volume: number; // 0.0 to 1.0, default 1.0
+  speechRate: number; // 0.7 to 1.3, default 1.0
+  volume: number; // 0.1 to 1.0, default 1.0
   soundChime: 'bell-high' | 'modern-chime' | 'soft-ding' | 'none';
-  audioFormatAnnouncement: string; // e.g. "₹{amount} received on PayVoice Demo"
+  audioFormatAnnouncement: string;
   speechVoiceName?: string;
   hapticFeedback: boolean;
   announcePayerName: boolean;
+  incomingVoiceEnabled: boolean; // Phase 2: incoming voice ON/OFF
+  outgoingVoiceEnabled: boolean; // Phase 2: outgoing voice ON/OFF
 }
 
 export interface AdPlacement {
@@ -78,7 +85,7 @@ export interface AdPlacement {
   headline: string;
   description: string;
   ctaText: string;
-  ctaUrl: string; // Always internal or demo safe target
+  ctaUrl: string;
   badgeLabel: 'Sponsored Demo' | 'Promoted Placeholder';
   category: 'business-software' | 'logistics' | 'inventory' | 'supplies';
 }
@@ -86,9 +93,9 @@ export interface AdPlacement {
 export interface SubscriptionPlan {
   id: 'free' | 'premium_monthly' | 'premium_yearly';
   name: string;
-  price: number; // 0, 49, 499
+  price: number;
   billingCycle: 'free' | 'monthly' | 'yearly';
-  priceDisplay: string; // "₹0", "₹49/month", "₹499/year"
+  priceDisplay: string;
   isDemo: true;
   features: {
     title: string;
@@ -100,7 +107,7 @@ export interface SubscriptionPlan {
 
 export interface DailyBrainSparkPuzzle {
   id: string;
-  dateKey: string; // YYYY-MM-DD
+  dateKey: string;
   title: Record<SupportedLanguage, string>;
   question: Record<SupportedLanguage, string>;
   options: {
@@ -117,7 +124,7 @@ export interface MemoryCard {
   matchKey: string;
   label: Record<SupportedLanguage, string>;
   iconName: string;
-  symbol: string; // Accessible non-color identifier
+  symbol: string;
 }
 
 export interface WordPuzzleItem {
@@ -138,7 +145,7 @@ export interface GameProgress {
     unlockedAt: string;
     icon: string;
   }[];
-  brainSparkCompletedDates: string[]; // YYYY-MM-DD
+  brainSparkCompletedDates: string[];
   currentStreak: number;
   bestStreak: number;
   memoryMatchBestMoves: number | null;
@@ -151,7 +158,7 @@ export interface GameProgress {
 export interface UserPreferences {
   theme: 'light' | 'dark' | 'system';
   language: SupportedLanguage;
-  personalizedAds: boolean; // toggle in Ad Preferences
+  personalizedAds: boolean;
   soundEnabled: boolean;
   reducedMotion: boolean;
   highContrast: boolean;
@@ -173,16 +180,11 @@ export interface SupportTicket {
   }[];
 }
 
-export interface DailyReportSummary {
-  date: string;
-  totalAmount: number;
-  transactionCount: number;
-  successCount: number;
-  failedCount: number;
-  pendingCount: number;
-  hourlyBreakdown: {
-    hour: string;
-    amount: number;
-    count: number;
-  }[];
+export interface VoiceAvailabilityStatus {
+  hasBengaliVoice: boolean;
+  bengaliVoiceName?: string;
+  hasHindiVoice: boolean;
+  hindiVoiceName?: string;
+  hasEnglishVoice: boolean;
+  englishVoiceName?: string;
 }

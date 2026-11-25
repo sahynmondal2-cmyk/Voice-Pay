@@ -1,5 +1,5 @@
 /**
- * PayVoice Domain Models & Types
+ * PayVoice Domain Models & Types - Phase 2
  * Strictly for demo and UI architecture purposes.
  * All financial references are artificial and marked Demo.
  */
@@ -18,13 +18,18 @@ export type PaymentMethod =
   | 'NetBanking Demo'
   | 'Wallet Demo';
 
+export type TransactionDirection = 'incoming' | 'outgoing';
+
 export interface DemoTransaction {
   id: string; // Artificial demo reference e.g. "DEMO-TXN-883921"
   timestamp: string; // ISO string
   amount: number; // In INR (₹)
   status: TransactionStatus;
-  customerName: string;
-  customerVpa: string; // Artificial masked VPA e.g. "rohit***@demo-upi"
+  direction: TransactionDirection; // 'incoming' = received, 'outgoing' = sent
+  customerName: string; // Sender if incoming, Recipient if outgoing
+  senderName?: string;
+  recipientName?: string;
+  customerVpa: string; // Masked VPA e.g. "priya***@demo-upi"
   method: PaymentMethod;
   notes?: string;
   shopId: string;
@@ -63,13 +68,15 @@ export interface Merchant {
 
 export interface VoiceSettings {
   language: SupportedLanguage;
-  speechRate: number;
-  volume: number;
+  speechRate: number; // 0.7 to 1.3, default 1.0
+  volume: number; // 0.1 to 1.0, default 1.0
   soundChime: 'bell-high' | 'modern-chime' | 'soft-ding' | 'none';
   audioFormatAnnouncement: string;
   speechVoiceName?: string;
   hapticFeedback: boolean;
   announcePayerName: boolean;
+  incomingVoiceEnabled: boolean; // Phase 2: incoming voice ON/OFF
+  outgoingVoiceEnabled: boolean; // Phase 2: outgoing voice ON/OFF
 }
 
 export interface AdPlacement {
@@ -171,4 +178,13 @@ export interface SupportTicket {
     text: string;
     isStaff: boolean;
   }[];
+}
+
+export interface VoiceAvailabilityStatus {
+  hasBengaliVoice: boolean;
+  bengaliVoiceName?: string;
+  hasHindiVoice: boolean;
+  hindiVoiceName?: string;
+  hasEnglishVoice: boolean;
+  englishVoiceName?: string;
 }

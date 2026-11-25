@@ -252,13 +252,32 @@ export const DashboardPage: React.FC = () => {
               >
                 {/* Left: Icon & Payer */}
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-xs text-brand-navy dark:text-slate-200 shrink-0">
-                    {txn.customerName.charAt(0)}
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-sm shrink-0 ${
+                      txn.direction === 'outgoing'
+                        ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
+                        : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                    }`}
+                  >
+                    {txn.direction === 'outgoing' ? '↑' : '↓'}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-xs sm:text-sm text-brand-navy dark:text-white truncate">
-                      {txn.customerName}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-bold text-xs sm:text-sm text-brand-navy dark:text-white truncate">
+                        {txn.direction === 'outgoing'
+                          ? `To: ${txn.recipientName || txn.customerName}`
+                          : `From: ${txn.senderName || txn.customerName}`}
+                      </p>
+                      <span
+                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                          txn.direction === 'outgoing'
+                            ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                        }`}
+                      >
+                        {txn.direction === 'outgoing' ? 'Sent' : 'Received'}
+                      </span>
+                    </div>
                     <p className="text-[11px] text-brand-muted dark:text-slate-400 font-mono truncate">
                       {txn.id} • {txn.method}
                     </p>
@@ -268,8 +287,14 @@ export const DashboardPage: React.FC = () => {
                 {/* Right: Amount & Replay Audio */}
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="text-right">
-                    <div className="font-extrabold text-sm sm:text-base text-brand-navy dark:text-white">
-                      ₹{txn.amount.toLocaleString('en-IN')}
+                    <div
+                      className={`font-extrabold text-sm sm:text-base ${
+                        txn.direction === 'outgoing'
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-brand-navy dark:text-white'
+                      }`}
+                    >
+                      {txn.direction === 'outgoing' ? '-' : '+'}₹{txn.amount.toLocaleString('en-IN')}
                     </div>
                     <div className="text-[10px]">
                       <TransactionStatusBadge status={txn.status} />

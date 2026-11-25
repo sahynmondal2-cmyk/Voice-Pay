@@ -52,10 +52,10 @@ fun PayVoiceApp(soundEngine: SoundEngineService) {
         composable(Screen.Dashboard.route) {
             DashboardScreen(
                 onTestVoice = {
-                    soundEngine.speakAnnouncement(150, "en", "Priya")
+                    soundEngine.speakIncoming(150, "en", "Priya")
                 },
                 onSimulatePayment = {
-                    soundEngine.speakAnnouncement(250, "bn", "Aniket Sen")
+                    soundEngine.speakOutgoing(150, "bn", "Priya")
                 },
                 onNavigateToTransactions = {
                     navController.navigate(Screen.Transactions.route)
@@ -73,7 +73,7 @@ fun PayVoiceApp(soundEngine: SoundEngineService) {
             TransactionsScreen(
                 onBack = { navController.popBackStack() },
                 onSpeakTxn = { txn ->
-                    soundEngine.speakAnnouncement(txn.amount, "en", txn.customerName)
+                    soundEngine.speakTransaction(txn.amount, "en", txn.direction, txn.customerName, txn.status, txn.id)
                 }
             )
         }
@@ -82,7 +82,10 @@ fun PayVoiceApp(soundEngine: SoundEngineService) {
             VoiceSettingsScreen(
                 onBack = { navController.popBackStack() },
                 onTestAnnouncement = { lang, _, _ ->
-                    soundEngine.speakAnnouncement(150, lang, "Merchant")
+                    soundEngine.speakTransaction(150, lang, "incoming", "Priya")
+                },
+                onTestSpecificVoice = { lang, dir, amt, name ->
+                    soundEngine.speakTransaction(amt, lang, dir, name)
                 }
             )
         }

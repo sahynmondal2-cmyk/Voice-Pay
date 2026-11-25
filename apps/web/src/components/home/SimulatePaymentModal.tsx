@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, CheckCircle2, QrCode, Sparkles, Volume2, ShieldAlert } from 'lucide-react';
+import { X, CheckCircle2, QrCode, Volume2, ShieldAlert, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { TransactionDirection } from '../../types';
 
 export const SimulatePaymentModal: React.FC = () => {
   const {
@@ -11,15 +12,16 @@ export const SimulatePaymentModal: React.FC = () => {
     activeShop,
   } = useApp();
 
+  const [direction, setDirection] = useState<TransactionDirection>('incoming');
   const [amount, setAmount] = useState<number>(150);
-  const [customerName, setCustomerName] = useState<string>('Priya Banerjee');
-  const [customerVpa, setCustomerVpa] = useState<string>('priya.b***@demo-upi');
-  const [notes, setNotes] = useState<string>('2 Sweet Boxes & Tea');
+  const [personName, setPersonName] = useState<string>('Priya');
+  const [customerVpa, setCustomerVpa] = useState<string>('priya***@demo-upi');
+  const [notes, setNotes] = useState<string>('Counter payment demo');
   const [isSuccess, setIsSuccess] = useState(false);
 
   if (!isSimulateModalOpen) return null;
 
-  const quickAmounts = [20, 50, 100, 150, 350, 500, 1200];
+  const quickAmounts = [10, 50, 100, 150, 500, 1000, 1500, 5000, 10000, 50000];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,16 +29,19 @@ export const SimulatePaymentModal: React.FC = () => {
 
     addTransaction({
       amount,
-      customerName: customerName.trim() || 'Demo Customer',
+      direction,
+      customerName: personName.trim() || 'Priya',
+      senderName: direction === 'incoming' ? (personName.trim() || 'Priya') : undefined,
+      recipientName: direction === 'outgoing' ? (personName.trim() || 'Priya') : undefined,
       customerVpa: customerVpa.trim(),
-      notes: notes.trim(),
+      notes: notes.trim() || (direction === 'outgoing' ? 'Vendor Payout Demo' : 'Counter payment demo'),
     });
 
     setIsSuccess(true);
     setTimeout(() => {
       setIsSuccess(false);
       setIsSimulateModalOpen(false);
-    }, 1400);
+    }, 1500);
   };
 
   return (
@@ -55,10 +60,10 @@ export const SimulatePaymentModal: React.FC = () => {
             </div>
             <div>
               <h3 id="simulate-payment-title" className="font-extrabold text-sm sm:text-base">
-                Simulate UPI QR Payment
+                Simulate Payment Voice Alert
               </h3>
               <p className="text-[11px] text-slate-300">
-                Trigger real-time voice announcement test
+                Trigger real-time speech announcement (Incoming & Outgoing)
               </p>
             </div>
           </div>
@@ -72,26 +77,66 @@ export const SimulatePaymentModal: React.FC = () => {
           </button>
         </div>
 
-        {/* Demo safety pill */}
-        <div className="bg-amber-500/10 dark:bg-amber-500/15 border-b border-amber-500/20 px-4 py-1.5 flex items-center gap-1.5 text-[11px] text-amber-800 dark:text-amber-300 font-medium">
-          <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-          <span>Demo Simulation Only — No live bank or UPI transfer.</span>
+        {/* Real Payment Integration: Not Connected Banner */}
+        <div className="bg-amber-500/10 dark:bg-amber-500/15 border-b border-amber-500/20 px-4 py-1.5 flex items-center justify-between text-[11px] text-amber-800 dark:text-amber-300 font-semibold">
+          <div className="flex items-center gap-1.5">
+            <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+            <span>Real Payment Integration: Not Connected</span>
+          </div>
+          <span className="text-[10px] bg-amber-500/20 px-1.5 py-0.5 rounded font-mono">Demo Mode</span>
         </div>
 
         {isSuccess ? (
           <div className="p-8 text-center space-y-3">
-            <div className="w-16 h-16 rounded-full bg-brand-accent/20 text-brand-accent mx-auto flex items-center justify-center animate-bounce">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-500 mx-auto flex items-center justify-center animate-bounce">
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <h4 className="text-lg font-bold text-brand-navy dark:text-white">
-              ₹{amount.toLocaleString('en-IN')} Received!
+              {direction === 'incoming'
+                ? `₹${amount.toLocaleString('en-IN')} Received from ${personName}!`
+                : `₹${amount.toLocaleString('en-IN')} Sent to ${personName}!`}
             </h4>
             <p className="text-xs text-brand-muted dark:text-slate-400">
-              Voice announcement triggered via speech engine.
+              {direction === 'incoming'
+                ? 'Incoming voice alert triggered via speech engine.'
+                : 'Outgoing voice alert triggered via speech engine.'}
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
+            {/* Direction Toggle: Incoming vs Outgoing */}
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                Payment Direction
+              </label>
+              <div className="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setDirection('incoming')}
+                  className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg font-bold text-xs transition-all ${
+                    direction === 'incoming'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  }`}
+                >
+                  <ArrowDownLeft className="w-4 h-4" />
+                  <span>Incoming (Received)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDirection('outgoing')}
+                  className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg font-bold text-xs transition-all ${
+                    direction === 'outgoing'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  }`}
+                >
+                  <ArrowUpRight className="w-4 h-4" />
+                  <span>Outgoing (Sent)</span>
+                </button>
+              </div>
+            </div>
+
             {/* Amount Input */}
             <div>
               <label htmlFor="sim-amount" className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
@@ -108,41 +153,41 @@ export const SimulatePaymentModal: React.FC = () => {
                   max="100000"
                   value={amount}
                   onChange={(e) => setAmount(Number(e.target.value))}
-                  className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 font-bold text-base text-brand-navy dark:text-white focus:border-brand-accent focus:bg-white dark:focus:bg-slate-800 transition-colors"
+                  className="w-full pl-8 pr-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 font-bold text-base text-brand-navy dark:text-white focus:border-brand-accent focus:bg-white dark:focus:bg-slate-800 transition-colors"
                   required
                 />
               </div>
 
               {/* Quick Amount Chips */}
-              <div className="flex flex-wrap gap-1.5 mt-2">
+              <div className="flex flex-wrap gap-1 mt-2">
                 {quickAmounts.map((q) => (
                   <button
                     key={q}
                     type="button"
                     onClick={() => setAmount(q)}
-                    className={`px-2.5 py-1 rounded-lg font-semibold text-[11px] transition-colors ${
+                    className={`px-2 py-0.5 rounded-lg font-semibold text-[11px] transition-colors ${
                       amount === q
                         ? 'bg-brand-primary text-white dark:bg-brand-accent dark:text-brand-navy'
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
                     }`}
                   >
-                    ₹{q}
+                    ₹{q >= 1000 ? `${q / 1000}k` : q}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Payer Name */}
+            {/* Name Input (Sender or Recipient based on direction) */}
             <div>
-              <label htmlFor="sim-payer" className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Customer / Payer Name
+              <label htmlFor="sim-person" className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                {direction === 'incoming' ? 'Customer / Payer Name' : 'Recipient Name'}
               </label>
               <input
-                id="sim-payer"
+                id="sim-person"
                 type="text"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="e.g. Priya Banerjee"
+                value={personName}
+                onChange={(e) => setPersonName(e.target.value)}
+                placeholder={direction === 'incoming' ? 'e.g. Priya' : 'e.g. Priya'}
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-brand-navy dark:text-white text-xs"
                 required
               />
@@ -151,20 +196,20 @@ export const SimulatePaymentModal: React.FC = () => {
             {/* Notes / Order Description */}
             <div>
               <label htmlFor="sim-notes" className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Counter Note / Item (Optional)
+                {direction === 'incoming' ? 'Counter Note (Optional)' : 'Payout Purpose (Optional)'}
               </label>
               <input
                 id="sim-notes"
                 type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="e.g. Sweets, Groceries"
+                placeholder={direction === 'incoming' ? 'e.g. Sweets & tea' : 'e.g. Vendor raw materials'}
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-brand-navy dark:text-white text-xs"
               />
             </div>
 
             <div className="text-[11px] text-brand-muted dark:text-slate-400">
-              Active Shop Counter: <strong>{activeShop.name}</strong>
+              Active Counter: <strong>{activeShop.name}</strong>
             </div>
 
             {/* Submit CTA */}
@@ -178,10 +223,14 @@ export const SimulatePaymentModal: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-brand-primary hover:bg-brand-primary-light text-white font-bold shadow-subtle active:scale-95"
+                className={`flex items-center gap-1.5 px-5 py-2 rounded-xl text-white font-bold shadow-subtle active:scale-95 transition-all ${
+                  direction === 'incoming'
+                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
               >
-                <Volume2 className="w-4 h-4 text-brand-accent" />
-                <span>Simulate & Announce</span>
+                <Volume2 className="w-4 h-4 text-white" />
+                <span>Simulate {direction === 'incoming' ? 'Incoming' : 'Outgoing'} & Announce</span>
               </button>
             </div>
           </form>
