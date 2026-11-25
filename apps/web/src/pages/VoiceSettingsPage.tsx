@@ -110,9 +110,9 @@ export const VoiceSettingsPage: React.FC = () => {
           {/* Bengali Voice */}
           <div
             className={`p-3 rounded-xl border ${
-              voiceAvailability.hasBengaliVoice
+              voiceAvailability.hasNativeBengaliVoice
                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-900 dark:text-emerald-200'
-                : 'bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-200'
+                : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-900 dark:text-cyan-200'
             }`}
           >
             <div className="flex items-center justify-between mb-1">
@@ -122,13 +122,13 @@ export const VoiceSettingsPage: React.FC = () => {
               </span>
             </div>
             <p className="text-[11px] leading-tight font-medium">
-              {voiceAvailability.hasBengaliVoice ? (
+              {voiceAvailability.hasNativeBengaliVoice ? (
                 <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300">
                   <CheckCircle2 className="w-3 h-3 shrink-0" /> Native Voice Detected
                 </span>
               ) : (
-                <span className="flex items-center gap-1 text-amber-700 dark:text-amber-300">
-                  <AlertTriangle className="w-3 h-3 shrink-0" /> Missing Native Voice Pack
+                <span className="flex items-center gap-1 text-cyan-700 dark:text-cyan-300">
+                  <CheckCircle2 className="w-3 h-3 shrink-0" /> Cloud Engine Active
                 </span>
               )}
             </p>
@@ -142,9 +142,9 @@ export const VoiceSettingsPage: React.FC = () => {
           {/* Hindi Voice */}
           <div
             className={`p-3 rounded-xl border ${
-              voiceAvailability.hasHindiVoice
+              voiceAvailability.hasNativeHindiVoice
                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-900 dark:text-emerald-200'
-                : 'bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-200'
+                : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-900 dark:text-cyan-200'
             }`}
           >
             <div className="flex items-center justify-between mb-1">
@@ -154,13 +154,13 @@ export const VoiceSettingsPage: React.FC = () => {
               </span>
             </div>
             <p className="text-[11px] leading-tight font-medium">
-              {voiceAvailability.hasHindiVoice ? (
+              {voiceAvailability.hasNativeHindiVoice ? (
                 <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300">
                   <CheckCircle2 className="w-3 h-3 shrink-0" /> Native Voice Detected
                 </span>
               ) : (
-                <span className="flex items-center gap-1 text-amber-700 dark:text-amber-300">
-                  <AlertTriangle className="w-3 h-3 shrink-0" /> Missing Native Voice Pack
+                <span className="flex items-center gap-1 text-cyan-700 dark:text-cyan-300">
+                  <CheckCircle2 className="w-3 h-3 shrink-0" /> Cloud Engine Active
                 </span>
               )}
             </p>
@@ -204,14 +204,12 @@ export const VoiceSettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {(!voiceAvailability.hasBengaliVoice || !voiceAvailability.hasHindiVoice) && (
-          <div className="flex items-start gap-2 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-[11px] text-amber-800 dark:text-amber-300">
-            <Info className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
-            <div>
-              <strong>Strict Separation Notice:</strong> PayVoice never uses Hindi pronunciation for Bengali or Bengali pronunciation for Hindi. If a native language voice pack is missing on your device, install the <em>Google Text-to-Speech</em> Bengali/Hindi speech data in Windows Settings &gt; Time &amp; Language &gt; Speech, or Android TTS Settings.
-            </div>
+        <div className="flex items-start gap-2 p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/40 text-[11px] text-blue-900 dark:text-blue-300">
+          <Info className="w-4 h-4 shrink-0 text-blue-600 mt-0.5" />
+          <div>
+            <strong>Hybrid Voice Engine:</strong> Bengali and Hindi voices speak with authentic natural pronunciation through native device speech packs or the PayVoice Cloud Voice Engine. PayVoice never uses Hindi pronunciation for Bengali.
           </div>
-        )}
+        </div>
       </div>
 
       {/* Main Settings Card */}

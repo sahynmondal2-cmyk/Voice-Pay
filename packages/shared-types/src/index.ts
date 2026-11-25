@@ -182,8 +182,12 @@ export interface SupportTicket {
 
 export interface VoiceAvailabilityStatus {
   hasBengaliVoice: boolean;
+  hasNativeBengaliVoice?: boolean;
+  isBengaliCloudFallback?: boolean;
   bengaliVoiceName?: string;
   hasHindiVoice: boolean;
+  hasNativeHindiVoice?: boolean;
+  isHindiCloudFallback?: boolean;
   hindiVoiceName?: string;
   hasEnglishVoice: boolean;
   englishVoiceName?: string;

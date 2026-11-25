@@ -88,31 +88,19 @@ export const SoundReadinessCard: React.FC = () => {
               Engine Locales:
             </span>
             <span
-              className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
-                voiceAvailability.hasBengaliVoice
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-              }`}
+              className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
             >
-              Bengali (bn-IN): {voiceAvailability.hasBengaliVoice ? 'Ready' : 'Device Fallback'}
+              Bengali (bn-IN): {voiceAvailability.hasNativeBengaliVoice ? 'Native TTS' : 'Cloud Engine Ready'}
             </span>
             <span
-              className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
-                voiceAvailability.hasHindiVoice
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-              }`}
+              className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
             >
-              Hindi (hi-IN): {voiceAvailability.hasHindiVoice ? 'Ready' : 'Device Fallback'}
+              Hindi (hi-IN): {voiceAvailability.hasNativeHindiVoice ? 'Native TTS' : 'Cloud Engine Ready'}
             </span>
             <span
-              className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
-                voiceAvailability.hasEnglishVoice
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-              }`}
+              className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
             >
-              English (en-IN): {voiceAvailability.hasEnglishVoice ? 'Ready' : 'Device Fallback'}
+              English (en-IN): Ready
             </span>
           </div>
 

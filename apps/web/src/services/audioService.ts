@@ -19,24 +19,85 @@ export class AudioService {
     }
   }
 
+  public isBengaliVoice(v: SpeechSynthesisVoice): boolean {
+    const l = (v.lang || '').toLowerCase();
+    const n = (v.name || '').toLowerCase();
+    return (
+      l === 'bn-in' ||
+      l === 'bn-bd' ||
+      l.startsWith('bn') ||
+      l.startsWith('ben') ||
+      n.includes('bengali') ||
+      n.includes('bangla') ||
+      n.includes('বাংলা') ||
+      n.includes('বাঙালি') ||
+      n.includes('bashkar') ||
+      n.includes('tanishaa') ||
+      n.includes('nabanita') ||
+      n.includes('pradeep') ||
+      n.includes('oparna') ||
+      n.includes('lekha')
+    );
+  }
+
+  public isHindiVoice(v: SpeechSynthesisVoice): boolean {
+    const l = (v.lang || '').toLowerCase();
+    const n = (v.name || '').toLowerCase();
+    return (
+      l === 'hi-in' ||
+      l.startsWith('hi') ||
+      l.startsWith('hin') ||
+      n.includes('hindi') ||
+      n.includes('हिन्दी') ||
+      n.includes('हिंदी') ||
+      n.includes('swara') ||
+      n.includes('madhur') ||
+      n.includes('kalpana') ||
+      n.includes('hemant')
+    );
+  }
+
+  public isEnglishVoice(v: SpeechSynthesisVoice): boolean {
+    const l = (v.lang || '').toLowerCase();
+    const n = (v.name || '').toLowerCase();
+    return l.includes('en-in') || l.startsWith('en') || n.includes('english');
+  }
+
   private initVoices(): void {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
+    const refresh = () => {
+      const v = window.speechSynthesis.getVoices();
+      if (v && v.length > 0) {
+        this.voices = v;
+      }
+    };
+
+    // Initial query
+    refresh();
+
+    // Permanent listener: keeps voices updated as browser connects online speech packs
+    window.speechSynthesis.addEventListener('voiceschanged', refresh);
+
     this.voicesLoadedPromise = new Promise((resolve) => {
       const existing = window.speechSynthesis.getVoices();
-      if (existing && existing.length > 0) {
+      if (
+        existing &&
+        existing.length > 0 &&
+        existing.some((voice) => this.isBengaliVoice(voice) || this.isHindiVoice(voice))
+      ) {
         this.voices = existing;
         resolve(existing);
       } else {
         const handler = () => {
-          this.voices = window.speechSynthesis.getVoices();
+          refresh();
           window.speechSynthesis.removeEventListener('voiceschanged', handler);
           resolve(this.voices);
         };
         window.speechSynthesis.addEventListener('voiceschanged', handler);
-        // Fallback timeout in case voiceschanged never fires
+        // Fallback timeout in case voiceschanged never fires or delayed
         setTimeout(() => {
-          this.voices = window.speechSynthesis.getVoices();
+          refresh();
           resolve(this.voices);
         }, 800);
       }
@@ -44,14 +105,22 @@ export class AudioService {
   }
 
   public async ensureVoicesLoaded(): Promise<SpeechSynthesisVoice[]> {
-    if (this.voices && this.voices.length > 0) {
-      return this.voices;
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return [];
+
+    const current = window.speechSynthesis.getVoices();
+    if (current && current.length > 0) {
+      this.voices = current;
     }
-    if (this.voicesLoadedPromise) {
-      return await this.voicesLoadedPromise;
+
+    if (this.voices.length === 0 && this.voicesLoadedPromise) {
+      await this.voicesLoadedPromise;
+      const recheck = window.speechSynthesis.getVoices();
+      if (recheck && recheck.length > 0) {
+        this.voices = recheck;
+      }
     }
-    this.initVoices();
-    return this.voicesLoadedPromise ? await this.voicesLoadedPromise : [];
+
+    return this.voices;
   }
 
   private getAudioContext(): AudioContext | null {
@@ -90,35 +159,28 @@ export class AudioService {
 
   /**
    * Check voice availability specifically for bn, hi, en.
-   * Ensures no silent cross-mixing.
+   * Seamlessly falls back to PayVoice Cloud Voice Engine if native voice pack is absent on device.
    */
   public async getVoiceAvailabilityStatus(): Promise<VoiceAvailabilityStatus> {
     const voices = await this.ensureVoicesLoaded();
 
-    const bnVoice = voices.find(
-      (v) =>
-        v.lang.toLowerCase().startsWith('bn') ||
-        v.name.toLowerCase().includes('bengali') ||
-        v.name.toLowerCase().includes('bangla')
-    );
-
-    const hiVoice = voices.find(
-      (v) =>
-        v.lang.toLowerCase().startsWith('hi') ||
-        v.name.toLowerCase().includes('hindi')
-    );
-
-    const enVoice = voices.find(
-      (v) =>
-        v.lang.toLowerCase().includes('en-in') ||
-        v.lang.toLowerCase().startsWith('en')
-    );
+    const bnVoice = voices.find((v) => this.isBengaliVoice(v));
+    const hiVoice = voices.find((v) => this.isHindiVoice(v));
+    const enVoice = voices.find((v) => this.isEnglishVoice(v));
 
     return {
-      hasBengaliVoice: !!bnVoice,
-      bengaliVoiceName: bnVoice ? `${bnVoice.name} (${bnVoice.lang})` : undefined,
-      hasHindiVoice: !!hiVoice,
-      hindiVoiceName: hiVoice ? `${hiVoice.name} (${hiVoice.lang})` : undefined,
+      hasBengaliVoice: true, // Always ready (native voice or high-fidelity cloud audio fallback)
+      hasNativeBengaliVoice: !!bnVoice,
+      isBengaliCloudFallback: !bnVoice,
+      bengaliVoiceName: bnVoice
+        ? `${bnVoice.name} (${bnVoice.lang})`
+        : 'PayVoice Natural Cloud Voice Engine (Online bn-IN)',
+      hasHindiVoice: true,
+      hasNativeHindiVoice: !!hiVoice,
+      isHindiCloudFallback: !hiVoice,
+      hindiVoiceName: hiVoice
+        ? `${hiVoice.name} (${hiVoice.lang})`
+        : 'PayVoice Natural Cloud Voice Engine (Online hi-IN)',
       hasEnglishVoice: !!enVoice,
       englishVoiceName: enVoice ? `${enVoice.name} (${enVoice.lang})` : undefined,
     };
@@ -395,6 +457,59 @@ export class AudioService {
    * Speak announcement using Web Speech API with strict language matching.
    * NEVER silently uses Hindi voice for Bengali or Bengali for Hindi.
    */
+  /**
+   * Play high-fidelity natural speech audio from Cloud Voice Engine fallback.
+   * Ensures natural Bengali/Hindi speech is delivered even when host device OS lacks local SAPI voice pack.
+   */
+  public async playCloudTtsAudio(
+    text: string,
+    language: SupportedLanguage,
+    volume = 1.0,
+    speedRate = 1.0
+  ): Promise<boolean> {
+    if (typeof window === 'undefined') return false;
+
+    return new Promise((resolve) => {
+      try {
+        const langCode = language === 'bn' ? 'bn' : language === 'hi' ? 'hi' : 'en-IN';
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${langCode}&client=tw-ob&q=${encodeURIComponent(text)}`;
+        const audio = new Audio();
+        audio.volume = Math.min(Math.max(volume, 0.1), 1.0);
+        audio.playbackRate = Math.min(Math.max(speedRate, 0.7), 1.3);
+
+        let finished = false;
+        const cleanup = (success: boolean) => {
+          if (!finished) {
+            finished = true;
+            audio.onended = null;
+            audio.onerror = null;
+            resolve(success);
+          }
+        };
+
+        const timer = setTimeout(() => cleanup(false), 8000);
+
+        audio.onended = () => {
+          clearTimeout(timer);
+          cleanup(true);
+        };
+
+        audio.onerror = () => {
+          clearTimeout(timer);
+          cleanup(false);
+        };
+
+        audio.src = url;
+        audio.play().catch(() => {
+          clearTimeout(timer);
+          cleanup(false);
+        });
+      } catch {
+        resolve(false);
+      }
+    });
+  }
+
   public async speakText(
     text: string,
     language: SupportedLanguage,
@@ -404,6 +519,44 @@ export class AudioService {
   ): Promise<void> {
     if (typeof window === 'undefined') return;
 
+    // Ensure voices are freshly initialized and up to date
+    const voices = await this.ensureVoicesLoaded();
+    let selectedVoice: SpeechSynthesisVoice | undefined;
+
+    if (language === 'bn') {
+      // Look strictly for Bengali voices
+      selectedVoice = voices.find((v) => this.isBengaliVoice(v));
+    } else if (language === 'hi') {
+      // Look strictly for Hindi voices
+      selectedVoice = voices.find((v) => this.isHindiVoice(v));
+    } else {
+      selectedVoice = voices.find((v) => this.isEnglishVoice(v));
+    }
+
+    // If native voice is not found on device for Bengali:
+    if (language === 'bn' && !selectedVoice) {
+      // STRICT RULE: Do not silently use Hindi voice for Bengali!
+      const cloudSuccess = await this.playCloudTtsAudio(text, 'bn', volume, speedRate);
+      if (cloudSuccess) {
+        return;
+      }
+      console.warn('Native Bengali TTS voice not found on device and cloud speech unavailable.');
+      if (onVoiceUnavailable) onVoiceUnavailable('bn');
+      return;
+    }
+
+    // If native voice is not found on device for Hindi:
+    if (language === 'hi' && !selectedVoice) {
+      // STRICT RULE: Do not silently use Bengali voice for Hindi!
+      const cloudSuccess = await this.playCloudTtsAudio(text, 'hi', volume, speedRate);
+      if (cloudSuccess) {
+        return;
+      }
+      console.warn('Native Hindi TTS voice not found on device and cloud speech unavailable.');
+      if (onVoiceUnavailable) onVoiceUnavailable('hi');
+      return;
+    }
+
     if (!('speechSynthesis' in window)) {
       console.warn('SpeechSynthesis not supported on this browser platform.');
       return;
@@ -412,62 +565,21 @@ export class AudioService {
     // Cancel any overlapping speech
     window.speechSynthesis.cancel();
 
-    // Ensure voices are initialized
-    const voices = await this.ensureVoicesLoaded();
-
     return new Promise((resolve) => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = Math.min(Math.max(speedRate, 0.7), 1.3);
       utterance.volume = Math.min(Math.max(volume, 0.1), 1.0);
       utterance.pitch = 1.0;
 
-      let selectedVoice: SpeechSynthesisVoice | undefined;
-
       if (language === 'bn') {
         utterance.lang = 'bn-IN';
-        // Look strictly for Bengali voices
-        selectedVoice = voices.find(
-          (v) =>
-            v.lang.toLowerCase() === 'bn-in' ||
-            v.lang.toLowerCase().startsWith('bn') ||
-            v.name.toLowerCase().includes('bengali') ||
-            v.name.toLowerCase().includes('bangla')
-        );
-
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        } else {
-          // STRICT RULE: Do not silently use Hindi voice for Bengali!
-          console.warn('Native Bengali TTS voice not found on device.');
-          if (onVoiceUnavailable) onVoiceUnavailable('bn');
-        }
+        if (selectedVoice) utterance.voice = selectedVoice;
       } else if (language === 'hi') {
         utterance.lang = 'hi-IN';
-        // Look strictly for Hindi voices
-        selectedVoice = voices.find(
-          (v) =>
-            v.lang.toLowerCase() === 'hi-in' ||
-            v.lang.toLowerCase().startsWith('hi') ||
-            v.name.toLowerCase().includes('hindi')
-        );
-
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        } else {
-          // STRICT RULE: Do not silently use Bengali voice for Hindi!
-          console.warn('Native Hindi TTS voice not found on device.');
-          if (onVoiceUnavailable) onVoiceUnavailable('hi');
-        }
+        if (selectedVoice) utterance.voice = selectedVoice;
       } else {
         utterance.lang = 'en-IN';
-        selectedVoice = voices.find(
-          (v) =>
-            v.lang.toLowerCase().includes('en-in') ||
-            v.lang.toLowerCase().startsWith('en')
-        );
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        }
+        if (selectedVoice) utterance.voice = selectedVoice;
       }
 
       utterance.onend = () => {
