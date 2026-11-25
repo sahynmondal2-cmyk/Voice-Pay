@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">PayVoice</string>
+    <string name="tagline">Every Payment, Heard Instantly</string>
+    <string name="demo_banner">DEMO MODE — Simulated Payment Voice Assistant</string>
+</resources>
