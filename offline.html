@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#14532D">
+  <title>PayVoice — Offline Mode</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #0F172A;
+      color: #F8FAFC;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+    .card {
+      background: #1E293B;
+      padding: 36px 28px;
+      border-radius: 24px;
+      max-width: 440px;
+      width: 100%;
+      border: 1px solid #334155;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .icon-container {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #14532D, #0F172A);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(34, 197, 94, 0.15);
+      color: #22C55E;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      padding: 4px 14px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      font-weight: 800;
+      color: #FFFFFF;
+    }
+    p {
+      color: #94A3B8;
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0 0 24px;
+    }
+    .tips {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 12px;
+      color: #CBD5E1;
+      margin-bottom: 24px;
+    }
+    .tips ul {
+      margin: 8px 0 0;
+      padding-left: 20px;
+    }
+    .tips li {
+      margin-bottom: 4px;
+    }
+    button {
+      background: #22C55E;
+      color: #0F172A;
+      font-weight: 800;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 14px;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:hover {
+      background: #16A34A;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    .status-text {
+      margin-top: 14px;
+      font-size: 11px;
+      color: #64748B;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon-container">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+      </svg>
+    </div>
+
+    <div class="badge">Offline Soundbox Ready</div>
+    <h1>You are currently offline</h1>
+    <p>PayVoice's PWA shell and cached offline speech voice packs remain active. All demo transactions recorded locally are preserved.</p>
+
+    <div class="tips">
+      <strong>Offline Soundbox Status:</strong>
+      <ul>
+        <li>Cached Bengali, Hindi & English speech packs available</li>
+        <li>Transaction history persisted in local storage</li>
+        <li>Full sync will resume automatically upon reconnecting</li>
+      </ul>
+    </div>
+
+    <button onclick="window.location.reload()">Retry Connection</button>
+    <div class="status-text" id="statusMsg">Waiting for internet connection...</div>
+  </div>
+
+  <script>
+    window.addEventListener('online', () => {
+      document.getElementById('statusMsg').textContent = 'Connection restored! Reloading PayVoice...';
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    });
+  </script>
+</body>
+</html>
