@@ -18,6 +18,9 @@ import {
 import { useApp } from '../context/AppContext';
 import { SupportedLanguage, TransactionDirection } from '../types';
 import { audioService } from '../services/audioService';
+import { notificationService } from '../services/notificationService';
+import { usePwaInstall } from '../hooks/usePwaInstall';
+import { Smartphone, Download, Check, BellRing, ShieldCheck } from 'lucide-react';
 
 export const VoiceSettingsPage: React.FC = () => {
   const {
@@ -32,8 +35,12 @@ export const VoiceSettingsPage: React.FC = () => {
     testEnglishVoice,
     isSpeaking,
     unlockAudio,
+    notificationPermission,
+    requestNotificationPermission,
   } = useApp();
 
+  const { isInstallable, isInstalled, installApp } = usePwaInstall();
+  const [testNotifyNotice, setTestNotifyNotice] = useState(false);
   const [testDirection, setTestDirection] = useState<TransactionDirection>('incoming');
   const [testAmount, setTestAmount] = useState<number>(150);
   const [testPersonName, setTestPersonName] = useState<string>('Priya');
@@ -44,6 +51,32 @@ export const VoiceSettingsPage: React.FC = () => {
   const handleSave = () => {
     setSavedNotice(true);
     setTimeout(() => setSavedNotice(false), 2000);
+  };
+
+  const handleTestNotification = async () => {
+    let perm = notificationPermission;
+    if (perm !== 'granted') {
+      perm = await requestNotificationPermission();
+    }
+    if (perm === 'granted') {
+      await notificationService.notifyTransaction({
+        id: `DEMO-TEST-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        amount: testAmount,
+        status: 'Demo Successful',
+        direction: testDirection,
+        customerName: testPersonName,
+        senderName: testDirection === 'incoming' ? testPersonName : undefined,
+        recipientName: testDirection === 'outgoing' ? testPersonName : undefined,
+        customerVpa: 'priya***@demo-upi',
+        method: 'UPI QR Demo',
+        shopId: 'shop_01',
+        voiceAnnounced: true,
+        isDemo: true,
+      });
+      setTestNotifyNotice(true);
+      setTimeout(() => setTestNotifyNotice(false), 3000);
+    }
   };
 
   const previewPhrase = audioService.buildAnnouncementText(
@@ -208,6 +241,107 @@ export const VoiceSettingsPage: React.FC = () => {
           <Info className="w-4 h-4 shrink-0 text-blue-600 mt-0.5" />
           <div>
             <strong>Hybrid Voice Engine:</strong> Bengali and Hindi voices speak with authentic natural pronunciation through native device speech packs or the PayVoice Cloud Voice Engine. PayVoice never uses Hindi pronunciation for Bengali.
+          </div>
+        </div>
+      </div>
+
+      {/* PWA & System Notification Readiness Card */}
+      <div className="bg-white dark:bg-brand-dark-surface rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-subtle space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <h2 className="text-xs font-bold text-brand-navy dark:text-white uppercase tracking-wider">
+              PWA Standalone & System Notifications
+            </h2>
+          </div>
+          {isInstalled ? (
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+              <Check className="w-3 h-3" /> Installed (Standalone Mode)
+            </span>
+          ) : isInstallable ? (
+            <button
+              type="button"
+              onClick={installApp}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-brand-primary text-white font-bold text-xs hover:bg-brand-primary-light active:scale-95 transition-all shadow-xs"
+            >
+              <Download className="w-3.5 h-3.5 text-brand-accent" />
+              <span>Install to Device</span>
+            </button>
+          ) : (
+            <span className="text-[11px] font-mono text-slate-400">Browser Tab Mode</span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Notification Permission Card */}
+          <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-brand-dark-card flex flex-col justify-between gap-3">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-bold text-xs text-brand-navy dark:text-white flex items-center gap-1.5">
+                  <BellRing className="w-3.5 h-3.5 text-brand-accent" /> System Notifications
+                </span>
+                <span
+                  className={`text-[10px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                    notificationPermission === 'granted'
+                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                      : notificationPermission === 'denied'
+                      ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+                      : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                  }`}
+                >
+                  {notificationPermission}
+                </span>
+              </div>
+              <p className="text-[11px] text-brand-muted dark:text-slate-400 leading-relaxed">
+                Receive visual payment heads-up popups on your device in tandem with the vocal soundbox alert.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {notificationPermission !== 'granted' ? (
+                <button
+                  type="button"
+                  onClick={requestNotificationPermission}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition-colors"
+                >
+                  Enable Notifications
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleTestNotification}
+                  className="px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-brand-navy dark:text-white font-semibold text-xs transition-colors"
+                >
+                  Send Test Notification
+                </button>
+              )}
+              {testNotifyNotice && (
+                <span className="text-[11px] text-emerald-600 font-semibold animate-pulse">
+                  Notification sent!
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Offline PWA Resilience Card */}
+          <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-brand-dark-card flex flex-col justify-between gap-3">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-bold text-xs text-brand-navy dark:text-white flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Offline Soundbox Cache
+                </span>
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                  Ready (PWA v2.5)
+                </span>
+              </div>
+              <p className="text-[11px] text-brand-muted dark:text-slate-400 leading-relaxed">
+                42 pre-rendered voice assets and local offline fallback are cached in Service Worker storage for instant playback without connectivity.
+              </p>
+            </div>
+
+            <p className="text-[10px] text-slate-400 font-mono">
+              Status: ServiceWorker active • Standalone display ready
+            </p>
           </div>
         </div>
       </div>

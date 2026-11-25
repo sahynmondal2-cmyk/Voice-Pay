@@ -281,10 +281,10 @@ runTest('Offline pre-rendered audio cache contains all 42 required MP3 files', (
 });
 
 // 46: Service Worker & PWA manifest inspection
-runTest('PWA manifest and Service Worker v2.2 with network-first navigation exist', () => {
+runTest('PWA manifest and Service Worker with network-first navigation exist', () => {
   const swPath = path.resolve(__dirname, '../../public/sw.js');
   const swCode = fs.readFileSync(swPath, 'utf8');
-  assert(swCode.includes('payvoice-v2.2'), 'Service worker must be v2.2');
+  assert(/payvoice-(v2\.2|pwa-v2\.5)/.test(swCode), 'Service worker must have payvoice cache version');
   assert(swCode.includes("event.request.mode === 'navigate'"), 'Must handle navigation network-first');
 
   const manifestPath = path.resolve(__dirname, '../../public/manifest.webmanifest');

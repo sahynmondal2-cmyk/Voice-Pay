@@ -17,6 +17,22 @@
   body {
     -webkit-tap-highlight-color: transparent;
   }
+
+  /* Standalone App Safe Area Insets for notch / home indicator */
+  @supports (padding-top: env(safe-area-inset-top)) {
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
+
+  /* Prevent rubber-band drag on standalone PWA viewports */
+  html {
+    overscroll-behavior-y: none;
+    -webkit-font-smoothing: antialiased;
+  }
 }
 
 /* Custom soundwave animations */

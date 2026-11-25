@@ -26,6 +26,7 @@ import { en } from '../locales/en';
 import { bn } from '../locales/bn';
 import { hi } from '../locales/hi';
 import { audioService } from '../services/audioService';
+import { notificationService } from '../services/notificationService';
 
 interface AppContextType {
   language: SupportedLanguage;
@@ -70,6 +71,8 @@ interface AppContextType {
   addSupportTicket: (subject: string, category: SupportTicket['category'], message: string) => void;
   isSimulateModalOpen: boolean;
   setIsSimulateModalOpen: (open: boolean) => void;
+  notificationPermission: NotificationPermission;
+  requestNotificationPermission: () => Promise<NotificationPermission>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -238,6 +241,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const unlocked = audioService.unlockAudio();
     setIsAudioUnlocked(unlocked);
     return unlocked;
+  }, []);
+
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(() => {
+    return notificationService.getPermission();
+  });
+
+  const requestNotificationPermission = useCallback(async () => {
+    const perm = await notificationService.requestPermission();
+    setNotificationPermission(perm);
+    return perm;
   }, []);
 
   const testVoiceAnnouncement = async (customText?: string, direction?: TransactionDirection) => {
@@ -440,9 +453,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return updated;
     });
 
-    // Speak aloud if successful
+    // Speak aloud if successful and send visual notification in tandem
     if (status === 'Demo Successful') {
       audioService.announceTransaction(newTxn, voiceSettings).catch(() => {});
+      notificationService.notifyTransaction(newTxn).catch(() => {});
     }
 
     return newTxn;
@@ -571,6 +585,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addSupportTicket,
         isSimulateModalOpen,
         setIsSimulateModalOpen,
+        notificationPermission,
+        requestNotificationPermission,
       }}
     >
       {children}

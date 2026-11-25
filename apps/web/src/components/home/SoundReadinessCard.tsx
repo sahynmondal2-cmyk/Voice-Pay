@@ -10,8 +10,11 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   Globe,
+  Download,
+  Smartphone,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { usePwaInstall } from '../../hooks/usePwaInstall';
 import { Link } from 'react-router-dom';
 
 export const SoundReadinessCard: React.FC = () => {
@@ -25,6 +28,7 @@ export const SoundReadinessCard: React.FC = () => {
     isSpeaking,
   } = useApp();
 
+  const { isInstallable, isInstalled, installApp } = usePwaInstall();
   const [showTroubleshoot, setShowTroubleshoot] = useState(false);
 
   return (
@@ -165,6 +169,18 @@ export const SoundReadinessCard: React.FC = () => {
             <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
             <span>Test Outgoing</span>
           </button>
+
+          {/* PWA Install Button when available */}
+          {isInstallable && (
+            <button
+              type="button"
+              onClick={installApp}
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-accent hover:bg-emerald-400 text-brand-navy font-bold text-xs transition-all shadow-subtle active:scale-95"
+            >
+              <Download className="w-3.5 h-3.5 shrink-0" />
+              <span>Install App</span>
+            </button>
+          )}
 
           <Link
             to="/voice-settings"
