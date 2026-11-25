@@ -7,3 +7,5 @@ dist/
 build/
 apps/android/app/build/
 apps/android/.gradle/
+
+*.pdf
